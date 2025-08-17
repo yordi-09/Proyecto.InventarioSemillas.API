@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Proyecto.InventarioSemillas.API.Dtos.Especie;
 using Proyecto.InventarioSemillas.API.Models;
 
 namespace Proyecto.InventarioSemillas.API.Controllers
 {
+    [Authorize(Roles = "Admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class EspeciesController(ApplicationDbContext context) : ControllerBase
@@ -43,7 +45,7 @@ namespace Proyecto.InventarioSemillas.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> PostEspecie(EspecieDto dto)
+        public async Task<ActionResult<bool>> PostEspecie(EspecieDto dto)
         {
             var especie = new Especie
             {
@@ -56,7 +58,7 @@ namespace Proyecto.InventarioSemillas.API.Controllers
             _context.Especies.Add(especie);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetEspecie), new { id = especie.Id }, dto);
+            return true;
         }
 
         [HttpPut("{id}")]

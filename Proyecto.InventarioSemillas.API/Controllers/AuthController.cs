@@ -60,7 +60,8 @@ namespace Proyecto.InventarioSemillas.API.Controllers
                 {
                     token = new JwtSecurityTokenHandler().WriteToken(token),
                     expiration = token.ValidTo,
-                    rol = userRole
+                    rol = userRole,
+                    name = user.UserName,
                 });
             }
 

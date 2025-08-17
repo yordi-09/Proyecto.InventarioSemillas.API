@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Proyecto.InventarioSemillas.API.Dtos.Ubicacion;
 using Proyecto.InventarioSemillas.API.Models;
 
 namespace Proyecto.InventarioSemillas.API.Controllers
 {
+    [Authorize(Roles = "Usuario")]
     [Route("api/[controller]")]
     [ApiController]
     public class UbicacionesController(ApplicationDbContext context) : ControllerBase
@@ -41,11 +43,11 @@ namespace Proyecto.InventarioSemillas.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> PostUbicacion(UbicacionDto dto)
+        public async Task<ActionResult<bool>> PostUbicacion(UbicacionDto dto)
         {
             // Validación: evitar nombre duplicado
-            if (await _context.Ubicaciones.AnyAsync(u => u.Nombre.Equals(dto.Nombre, StringComparison.CurrentCultureIgnoreCase)))
-                return BadRequest("Ya existe una ubicación con ese nombre.");
+            if (await _context.Ubicaciones.AnyAsync(u => u.Nombre.ToLower() == dto.Nombre.ToLower()))
+                return false;
 
             var nueva = new Ubicacion
             {
@@ -57,7 +59,7 @@ namespace Proyecto.InventarioSemillas.API.Controllers
             _context.Ubicaciones.Add(nueva);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetUbicacion), new { id = nueva.Id }, dto);
+            return true;
         }
 
         [HttpPut("{id}")]

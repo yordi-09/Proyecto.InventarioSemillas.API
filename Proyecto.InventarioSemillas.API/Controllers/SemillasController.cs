@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Proyecto.InventarioSemillas.API.Dtos.Semilla;
 using Proyecto.InventarioSemillas.API.Models;
 
 namespace Proyecto.InventarioSemillas.API.Controllers
 {
+    [Authorize(Roles = "Usuario")]
     [Route("api/[controller]")]
     [ApiController]
     public class SemillasController(ApplicationDbContext context) : ControllerBase
@@ -45,18 +47,18 @@ namespace Proyecto.InventarioSemillas.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> PostSemilla(SemillaDto dto)
+        public async Task<ActionResult<bool>> PostSemilla(SemillaDto dto)
         {
             // Validación: evitar duplicado por nombre
             if (await _context.Semillas.AnyAsync(s => s.Nombre.ToLower() == dto.Nombre.ToLower()))
-                return BadRequest("Ya existe una semilla con ese nombre.");
+                return false;
 
             // Validación: existencia de especie y ubicación
             if (!await _context.Especies.AnyAsync(e => e.Id == dto.EspecieId))
-                return BadRequest("Especie no válida.");
+                return false;
 
             if (!await _context.Ubicaciones.AnyAsync(u => u.Id == dto.UbicacionId))
-                return BadRequest("Ubicación no válida.");
+                return false;
 
             var nueva = new Semilla
             {
@@ -70,7 +72,7 @@ namespace Proyecto.InventarioSemillas.API.Controllers
             _context.Semillas.Add(nueva);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetSemilla), new { id = nueva.Id }, dto);
+            return true;
         }
 
         [HttpPut("{id}")]
